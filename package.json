@@ -1,0 +1,50 @@
+{
+  "name": "todo-app-qa-automation",
+  "version": "1.0.0",
+  "description": "Full-stack Todo application with comprehensive QA automation testing",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "test:api": "cd backend && npm test",
+    "test:api:watch": "cd backend && npm run test:watch",
+    "test:api:coverage": "cd backend && npm test -- --coverage",
+    "test:ui": "cd frontend && npx playwright test",
+    "test:ui:headed": "cd frontend && npx playwright test --headed",
+    "test:ui:ui": "cd frontend && npx playwright test --ui",
+    "test:visual": "cd frontend && npx playwright test tests/visual.spec.js",
+    "test:all": "npm run test:api && npm run test:ui",
+    "setup": "npm run install:all && cd frontend && npx playwright install",
+    "start:all": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "build:frontend": "cd frontend && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/todo-app-qa-automation.git"
+  },
+  "keywords": [
+    "qa-automation",
+    "testing",
+    "playwright",
+    "jest",
+    "supertest",
+    "react",
+    "nodejs",
+    "express",
+    "todo-app"
+  ],
+  "author": "QA Automation Demo",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+} 
