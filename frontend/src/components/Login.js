@@ -1,48 +1,64 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-function Login({ onLogin }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+const Login = ({ onLogin }) => {
+  const [credentials, setCredentials] = useState({
+    username: '',
+    password: ''
+  });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
-
-    if (!username.trim() || !password) {
-      setError('Username and password are required');
-      setLoading(false);
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/login`, {
-        username: username.trim(),
-        password
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
       });
 
-      onLogin(response.data.user, response.data.token);
-    } catch (error) {
-      if (error.response && error.response.data && error.response.data.error) {
-        setError(error.response.data.error);
+      const data = await response.json();
+
+      if (response.ok) {
+        onLogin(data.user, data.token);
       } else {
-        setError('Login failed. Please try again.');
+        setError(data.error || 'Login failed');
       }
+    } catch (error) {
+      setError('Network error. Please try again.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    setCredentials({
+      ...credentials,
+      [e.target.name]: e.target.value
+    });
+    if (error) {
+      setError('');
     }
   };
 
   return (
     <div className="login-container">
-      <form onSubmit={handleSubmit} className="login-form" data-testid="login-form">
+      <form onSubmit={handleSubmit} className="login-form">
         <h2>Login</h2>
         
+        <div className="demo-credentials">
+          <p>Demo credentials:</p>
+          <p>Username: admin | Password: password</p>
+          <p>Username: user | Password: password</p>
+        </div>
+
         {error && (
           <div className="error-message" data-testid="error-message">
             {error}
@@ -54,11 +70,12 @@ function Login({ onLogin }) {
           <input
             type="text"
             id="username"
+            name="username"
+            value={credentials.username}
+            onChange={handleChange}
+            required
+            disabled={isLoading}
             data-testid="username-input"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            disabled={loading}
-            placeholder="Enter username"
           />
         </div>
 
@@ -67,31 +84,25 @@ function Login({ onLogin }) {
           <input
             type="password"
             id="password"
+            name="password"
+            value={credentials.password}
+            onChange={handleChange}
+            required
+            disabled={isLoading}
             data-testid="password-input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-            placeholder="Enter password"
           />
         </div>
 
         <button 
           type="submit" 
-          disabled={loading}
-          className="login-btn"
+          disabled={isLoading}
           data-testid="login-button"
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {isLoading ? 'Logging in...' : 'Login'}
         </button>
-
-        <div className="demo-credentials">
-          <p><strong>Demo Credentials:</strong></p>
-          <p>Username: admin, Password: password</p>
-          <p>Username: user, Password: password</p>
-        </div>
       </form>
     </div>
   );
-}
+};
 
 export default Login; 

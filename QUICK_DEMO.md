@@ -1,4 +1,4 @@
-# Quick Demo Script 🎯
+# Quick Demo Script
 
 This is a 5-minute demo script to showcase the Todo App QA Automation project.
 

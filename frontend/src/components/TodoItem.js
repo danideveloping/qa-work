@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 function TodoItem({ todo, onUpdate, onDelete }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(todo.title);
+  const [editText, setEditText] = useState(todo.text);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleToggleComplete = async () => {
@@ -12,18 +12,18 @@ function TodoItem({ todo, onUpdate, onDelete }) {
   };
 
   const handleSaveEdit = async () => {
-    if (!editTitle.trim()) {
+    if (!editText.trim()) {
       return;
     }
 
     setIsUpdating(true);
-    await onUpdate(todo.id, { title: editTitle.trim() });
+    await onUpdate(todo.id, { text: editText.trim() });
     setIsEditing(false);
     setIsUpdating(false);
   };
 
   const handleCancelEdit = () => {
-    setEditTitle(todo.title);
+    setEditText(todo.text);
     setIsEditing(false);
   };
 
@@ -34,21 +34,20 @@ function TodoItem({ todo, onUpdate, onDelete }) {
   };
 
   return (
-    <div className={`todo-item ${todo.completed ? 'completed' : ''}`} data-testid="todo-item">
+    <div className={`todo-item ${todo.completed ? 'completed' : ''}`}>
       <div className="todo-content">
         <input
           type="checkbox"
           checked={todo.completed}
           onChange={handleToggleComplete}
           disabled={isUpdating}
-          data-testid="todo-checkbox"
         />
 
         {isEditing ? (
           <input
             type="text"
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
                 handleSaveEdit();
@@ -57,15 +56,12 @@ function TodoItem({ todo, onUpdate, onDelete }) {
               }
             }}
             disabled={isUpdating}
-            data-testid="edit-todo-input"
+            className="edit-input"
             autoFocus
           />
         ) : (
-          <span 
-            className="todo-title"
-            data-testid="todo-title"
-          >
-            {todo.title}
+          <span className="todo-text">
+            {todo.text}
           </span>
         )}
       </div>
@@ -76,7 +72,6 @@ function TodoItem({ todo, onUpdate, onDelete }) {
             <button
               onClick={handleSaveEdit}
               disabled={isUpdating}
-              data-testid="save-edit-button"
               className="save-btn"
             >
               Save
@@ -84,7 +79,6 @@ function TodoItem({ todo, onUpdate, onDelete }) {
             <button
               onClick={handleCancelEdit}
               disabled={isUpdating}
-              data-testid="cancel-edit-button"
               className="cancel-btn"
             >
               Cancel
@@ -95,7 +89,6 @@ function TodoItem({ todo, onUpdate, onDelete }) {
             <button
               onClick={() => setIsEditing(true)}
               disabled={isUpdating}
-              data-testid="edit-button"
               className="edit-btn"
             >
               Edit
@@ -103,7 +96,6 @@ function TodoItem({ todo, onUpdate, onDelete }) {
             <button
               onClick={handleDelete}
               disabled={isUpdating}
-              data-testid="delete-button"
               className="delete-btn"
             >
               Delete

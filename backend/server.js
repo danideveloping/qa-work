@@ -2,39 +2,36 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// In-memory storage (for demo purposes)
 const users = [
   {
     id: 1,
     username: 'admin',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' // password
+    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
   },
   {
     id: 2,
     username: 'user',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' // password
+    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
   }
 ];
 
 let todos = [
-  { id: 1, title: 'Learn React', completed: false, userId: 1 },
-  { id: 2, title: 'Write tests', completed: false, userId: 1 },
-  { id: 3, title: 'Deploy app', completed: true, userId: 2 }
+  { id: 1, text: 'Sample Todo 1', completed: false, userId: 1 },
+  { id: 2, text: 'Sample Todo 2', completed: true, userId: 1 },
+  { id: 3, text: 'User Todo 1', completed: false, userId: 2 },
+  { id: 4, text: 'User Todo 2', completed: false, userId: 2 }
 ];
 
-let nextTodoId = 4;
+let nextTodoId = 5;
 
-// Authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -52,12 +49,6 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Routes
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// Authentication
 app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -67,11 +58,13 @@ app.post('/login', async (req, res) => {
     }
 
     const user = users.find(u => u.username === username);
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
+
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -83,31 +76,44 @@ app.post('/login', async (req, res) => {
     );
 
     res.json({
+      success: true,
       token,
-      user: { id: user.id, username: user.username }
+      user: {
+        id: user.id,
+        username: user.username
+      }
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Todo CRUD operations
 app.get('/items', authenticateToken, (req, res) => {
-  const userTodos = todos.filter(todo => todo.userId === req.user.id);
-  res.json(userTodos);
+  try {
+    const userTodos = todos.filter(todo => todo.userId === req.user.id);
+    res.json(userTodos);
+  } catch (error) {
+    console.error('Get todos error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.post('/items', authenticateToken, (req, res) => {
   try {
-    const { title } = req.body;
+    const { text } = req.body;
 
-    if (!title || title.trim() === '') {
-      return res.status(400).json({ error: 'Title is required' });
+    if (!text || text.trim() === '') {
+      return res.status(400).json({ error: 'Todo text is required' });
+    }
+
+    if (text.length > 200) {
+      return res.status(400).json({ error: 'Todo text too long (max 200 characters)' });
     }
 
     const newTodo = {
       id: nextTodoId++,
-      title: title.trim(),
+      text: text.trim(),
       completed: false,
       userId: req.user.id
     };
@@ -115,6 +121,7 @@ app.post('/items', authenticateToken, (req, res) => {
     todos.push(newTodo);
     res.status(201).json(newTodo);
   } catch (error) {
+    console.error('Create todo error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -122,7 +129,7 @@ app.post('/items', authenticateToken, (req, res) => {
 app.put('/items/:id', authenticateToken, (req, res) => {
   try {
     const todoId = parseInt(req.params.id);
-    const { title, completed } = req.body;
+    const { text, completed } = req.body;
 
     const todoIndex = todos.findIndex(todo => 
       todo.id === todoId && todo.userId === req.user.id
@@ -132,11 +139,14 @@ app.put('/items/:id', authenticateToken, (req, res) => {
       return res.status(404).json({ error: 'Todo not found' });
     }
 
-    if (title !== undefined) {
-      if (title.trim() === '') {
-        return res.status(400).json({ error: 'Title cannot be empty' });
+    if (text !== undefined) {
+      if (!text || text.trim() === '') {
+        return res.status(400).json({ error: 'Todo text is required' });
       }
-      todos[todoIndex].title = title.trim();
+      if (text.length > 200) {
+        return res.status(400).json({ error: 'Todo text too long (max 200 characters)' });
+      }
+      todos[todoIndex].text = text.trim();
     }
 
     if (completed !== undefined) {
@@ -145,6 +155,7 @@ app.put('/items/:id', authenticateToken, (req, res) => {
 
     res.json(todos[todoIndex]);
   } catch (error) {
+    console.error('Update todo error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -152,6 +163,7 @@ app.put('/items/:id', authenticateToken, (req, res) => {
 app.delete('/items/:id', authenticateToken, (req, res) => {
   try {
     const todoId = parseInt(req.params.id);
+    
     const todoIndex = todos.findIndex(todo => 
       todo.id === todoId && todo.userId === req.user.id
     );
@@ -161,21 +173,20 @@ app.delete('/items/:id', authenticateToken, (req, res) => {
     }
 
     const deletedTodo = todos.splice(todoIndex, 1)[0];
-    res.json(deletedTodo);
+    res.json({ success: true, todo: deletedTodo });
   } catch (error) {
+    console.error('Delete todo error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// 404 handler
 app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({ error: 'Endpoint not found' });
 });
 
-// Error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+app.use((error, req, res, next) => {
+  console.error('Server error:', error);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 const server = app.listen(PORT, () => {

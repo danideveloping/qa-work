@@ -4,7 +4,7 @@ import TodoItem from './TodoItem';
 
 function TodoList({ token, apiBaseUrl }) {
   const [todos, setTodos] = useState([]);
-  const [newTodoTitle, setNewTodoTitle] = useState('');
+  const [newTodoText, setNewTodoText] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -34,8 +34,8 @@ function TodoList({ token, apiBaseUrl }) {
   const handleAddTodo = async (e) => {
     e.preventDefault();
     
-    if (!newTodoTitle.trim()) {
-      setError('Todo title is required');
+    if (!newTodoText.trim()) {
+      setError('Todo text is required');
       return;
     }
 
@@ -45,12 +45,12 @@ function TodoList({ token, apiBaseUrl }) {
     try {
       const response = await axios.post(
         `${apiBaseUrl}/items`,
-        { title: newTodoTitle.trim() },
+        { text: newTodoText.trim() },
         axiosConfig
       );
       
       setTodos([...todos, response.data]);
-      setNewTodoTitle('');
+      setNewTodoText('');
     } catch (error) {
       setError('Failed to add todo');
       console.error('Error adding todo:', error);
@@ -93,7 +93,7 @@ function TodoList({ token, apiBaseUrl }) {
   }
 
   return (
-    <div className="todo-list-container">
+    <div className="todo-list">
       <h2>My Todos</h2>
 
       {error && (
@@ -106,23 +106,23 @@ function TodoList({ token, apiBaseUrl }) {
         <div className="add-todo-group">
           <input
             type="text"
-            value={newTodoTitle}
-            onChange={(e) => setNewTodoTitle(e.target.value)}
+            value={newTodoText}
+            onChange={(e) => setNewTodoText(e.target.value)}
             placeholder="Enter new todo..."
             disabled={isAdding}
-            data-testid="new-todo-input"
+            className="todo-input"
           />
           <button 
             type="submit" 
             disabled={isAdding}
-            data-testid="add-todo-button"
+            className="add-todo-btn"
           >
             {isAdding ? 'Adding...' : 'Add Todo'}
           </button>
         </div>
       </form>
 
-      <div className="todos-container" data-testid="todos-container">
+      <div className="todos-container">
         {todos.length === 0 ? (
           <p className="no-todos">No todos yet. Add one above!</p>
         ) : (

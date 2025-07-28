@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import Login from './components/Login';
 import TodoList from './components/TodoList';
 import './App.css';
@@ -7,82 +6,70 @@ import './App.css';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
-    // Check if user is already logged in
-    if (token) {
-      // Verify token by making a request to get todos
-      axios.get(`${API_BASE_URL}/items`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(() => {
-        // Token is valid, get user info from token
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          setUser({ id: payload.id, username: payload.username });
-        } catch (error) {
-          // Invalid token format
-          handleLogout();
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      const response = fetch(`${API_BASE_URL}/items`, {
+        headers: {
+          'Authorization': `Bearer ${storedToken}`
         }
       })
-      .catch(() => {
-        // Token is invalid
-        handleLogout();
+      .then(response => {
+        if (response.ok) {
+          try {
+            const payload = JSON.parse(atob(storedToken.split('.')[1]));
+            setUser(payload);
+            setToken(storedToken);
+            setIsAuthenticated(true);
+          } catch (error) {
+            localStorage.removeItem('token');
+          }
+        } else {
+          localStorage.removeItem('token');
+        }
       })
-      .finally(() => {
-        setLoading(false);
+      .catch(error => {
+        localStorage.removeItem('token');
       });
-    } else {
-      setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const handleLogin = (userData, authToken) => {
+    localStorage.setItem('token', authToken);
     setUser(userData);
     setToken(authToken);
-    localStorage.setItem('token', authToken);
+    setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
     setUser(null);
     setToken(null);
-    localStorage.removeItem('token');
+    setIsAuthenticated(false);
   };
 
-  if (loading) {
-    return (
-      <div className="app">
-        <div className="loading">Loading...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="app">
-      <header className="app-header">
+    <div className="App">
+      <header className="App-header">
         <h1>Todo App</h1>
-        {user && (
+        {isAuthenticated && user && (
           <div className="user-info">
             <span>Welcome, {user.username}!</span>
-            <button 
-              onClick={handleLogout}
-              className="logout-btn"
-              data-testid="logout-button"
-            >
+            <button onClick={handleLogout} className="logout-btn">
               Logout
             </button>
           </div>
         )}
       </header>
-
-      <main className="app-main">
-        {!user ? (
-          <Login onLogin={handleLogin} />
-        ) : (
+      <main>
+        {isAuthenticated ? (
           <TodoList token={token} apiBaseUrl={API_BASE_URL} />
+        ) : (
+          <Login onLogin={handleLogin} />
         )}
       </main>
     </div>
